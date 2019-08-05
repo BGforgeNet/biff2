@@ -1,0 +1,2 @@
+cd override
+oggdec *.ogg
