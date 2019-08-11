@@ -6,9 +6,9 @@ VERSION ~v2~
 LANGUAGE ~English~ ~English~ ~%MOD_FOLDER%/tra/english/setup.tra~
 
 BEGIN @1
-OUTER_SET comp_num 0
+OUTER_SET comp_num = 0
 INCLUDE ~%MOD_FOLDER%/main.tpa~
 
 BEGIN @2
-OUTER_SET comp_num 1
+OUTER_SET comp_num = 1
 INCLUDE ~%MOD_FOLDER%/main.tpa~
