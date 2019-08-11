@@ -1,2 +1,4 @@
 cd override
-oggdec *.ogg
+if [[ "$(ls | grep -i "\.ogg$")" > 0 ]]; then
+  oggdec *.ogg
+fi
