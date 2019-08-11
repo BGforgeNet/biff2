@@ -1,0 +1,55 @@
+OUTER_TEXT_SPRINT prod_dir "%MOD_FOLDER%/prod/%comp_num%"
+OUTER_TEXT_SPRINT prod_dir_win "%MOD_FOLDER%\prod\%comp_num%"
+
+ACTION_IF ~%WEIDU_OS%~ STRING_COMPARE_CASE ~WIN32~ THEN BEGIN
+  AT_UNINSTALL ~rm -rf %prod_dir%~
+  AT_NOW ~%MOD_FOLDER%/oggdec.sh~
+END ELSE BEGIN
+  AT_UNINSTALL ~del /q /f %prod_dir_win%~ EXACT
+  AT_NOW ~%MOD_FOLDER%/oggdec.bat~
+END
+
+<<<<<<<< .../list-of-files
+>>>>>>>>
+
+// this defines a one to eight character regular expression for matching resrefs
+OUTER_TEXT_SPRINT ~char~ ~[^ %TAB%%WNL%]~
+OUTER_TEXT_SPRINT ~8char~ ~%char%%char%?%char%?%char%?%char%?%char%?%char%?%char%?~
+OUTER_TEXT_SPRINT ~9char~ ~%char%%char%%char%%char%%char%%char%%char%%char%%char%%char%*~
+OUTER_TEXT_SPRINT ext ~\(bmp\|mve\|wav\|wac\|plt\|bam\|wed\|chu\|tis\|mos\|itm\|spl\|bcs\|ids\|cre\|are\|dlg\|2da\|gam\|sto\|wmp\|chr\|eff\|vvc\|vef\|pro\|wbm\|fnt\|gui\|sql\|pvrz\|glsl\|ini\|lua\|menu\|ttf\|png\|toh\|tot\)~
+
+OUTER_TEXT_SPRINT ~myRegExp~ ~^%8char%\.%ext%$~
+
+MKDIR ~%prod_dir%/biffs/0~
+MKDIR ~%prod_dir%/rej~
+
+OUTER_SET currentTotal = 0
+OUTER_SET currentFile = 0
+ACTION_BASH_FOR ~override~ ~%myRegExp%~ BEGIN
+  ACTION_IF %BASH_FOR_SIZE% + currentTotal > 30000000 /* 30M */ && currentTotal > 0 BEGIN
+    MAKE_BIFF ~g_biff%comp_num%_%currentFile%~ BEGIN ~%prod_dir%/biffs/%currentFile%~ ~^.*$~ END
+    OUTER_SET currentFile = currentFile + 1
+    OUTER_SET currentTotal = 0
+    MKDIR ~%prod_dir%/biffs/%currentFile%~
+  END
+  MOVE ~override/%BASH_FOR_FILE%~ ~%prod_dir%/biffs/%currentFile%/%BASH_FOR_FILE%~
+  OUTER_SET currentTotal += BASH_FOR_SIZE
+END
+
+ACTION_IF currentTotal > 0 BEGIN
+  MAKE_BIFF ~g_biff%comp_num%_%currentFile%~ BEGIN ~%prod_dir%/biffs/%currentFile%~ ~^.*$~ END
+END
+
+OUTER_TEXT_SPRINT ~myRegExp~ ~^%9char%.%ext%$~
+ACTION_BASH_FOR ~override~ ~%myRegExp%~ BEGIN
+  OUTER_PATCH_SAVE ~8name~ ~%BASH_FOR_FILE%~ BEGIN
+    DELETE_BYTES 8 (INDEX_BUFFER (EXACT_MATCH ~.~) - 8)
+  END
+  ACTION_IF FILE_EXISTS_IN_GAME ~%8name%~ THEN BEGIN
+    MOVE ~override/%BASH_FOR_FILE%~ ~%prod_dir%/rej/%BASH_FOR_FILE%~
+  END
+END
+
+// make sure override is really empty
+DELETE ~override~
+MKDIR ~override~
